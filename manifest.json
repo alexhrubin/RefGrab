@@ -24,7 +24,8 @@
                 "*://journals.aps.org/*",
                 "*://www.nature.com/*",
                 "*://arxiv.org/*",
-                "*://pubs.acs.org/*"
+                "*://pubs.acs.org/*",
+                "*://onlinelibrary.wiley.com/*"
             ],
             "js": ["content.js"]
         }

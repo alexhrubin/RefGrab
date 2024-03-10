@@ -33,6 +33,14 @@ chrome.action.onClicked.addListener(async (tab) => {
         } catch (error) {
             console.error('Failed to copy citation:', error);
         }
+    } else if (tab.url.includes("onlinelibrary.wiley.com")) {
+        try {
+            const citationText = await fetchWileyCitation(tab.url);
+            copyToClipboard(tab.id, citationText.trim());
+            console.log('Citation copied to clipboard.');
+        } catch (error) {
+            console.error('Failed to copy citation:', error);
+        }
     }
 });
 
@@ -104,6 +112,53 @@ async function fetchAcsCitation(currentUrl) {
 
     return citationText;
 }
+
+
+function extractWileyDoi(currentUrl) {
+    const parsedUrl = new URL(currentUrl);
+
+    // Get the pathname part of the URL
+    const pathname = parsedUrl.pathname;
+
+    // Split the pathname into segments
+    const segments = pathname.split('/');
+
+    // Find the index of the segment that is "doi"
+    const doiIndex = segments.indexOf('doi');
+
+    // Extract the DOI, which should be right after the "doi" segment, while avoiding any additional segments like "abs"
+    const doi = segments.slice(doiIndex + 2).join('/');
+
+    return doi;
+}
+
+
+async function fetchWileyCitation(currentUrl) {
+    const url = 'https://onlinelibrary.wiley.com/action/downloadCitation'; // Replace with the actual form action URL
+    const formData = new FormData();
+
+    formData.append('doi', extractWileyDoi(currentUrl));
+    formData.append('downloadFileName', 'pericles_186388993');
+    formData.append('include', 'abs');
+    formData.append('format', 'bibtex'); // Assuming you want BibTeX format
+    formData.append('direct', 'direct'); // Assuming direct import
+
+    let citationText = await fetch(url, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not OK');
+      }
+      return response.text();
+    })
+    .catch(error => {
+      console.error('Failed to fetch citation:', error);
+    });
+
+    return citationText;
+  }
 
 
 async function fetchCitation(citationUrl) {
