@@ -25,6 +25,14 @@ chrome.action.onClicked.addListener(async (tab) => {
         } catch (error) {
             console.error('Failed to copy citation:', error);
         }
+    } else if (tab.url.includes("pubs.acs.org")) {
+        try {
+            const citationText = await fetchAcsCitation(tab.url);
+            copyToClipboard(tab.id, citationText.trim());
+            console.log('Citation copied to clipboard.');
+        } catch (error) {
+            console.error('Failed to copy citation:', error);
+        }
     }
 });
 
@@ -52,6 +60,49 @@ function physRevCitationUrl(currentUrl) {
     // Replace "pdf" or "abstract" with "export"
     let exportUrl = baseUrl.replace(/\/(pdf|abstract)\//, '/export/');
     return exportUrl;
+}
+
+// For ACS journals
+function extractAcsDoi(currentUrl) {
+    const parsedUrl = new URL(currentUrl);
+
+    // Get the pathname part of the URL and split it into segments
+    const pathSegments = parsedUrl.pathname.split('/');
+
+    // Assuming the DOI is always after '/doi/full/', join the remaining parts.
+    const doiIndex = pathSegments.indexOf('doi');
+    if (doiIndex !== -1 && pathSegments.length > doiIndex + 2) {
+      // Join the segments from the segment after 'full' to the end to form the DOI
+      const doiSegments = pathSegments.slice(doiIndex + 2);
+      const doi = doiSegments.join('/');
+      return doi;
+    }
+    return null;
+}
+
+async function fetchAcsCitation(currentUrl) {
+    const url = "https://pubs.acs.org/action/downloadCitation";
+    const data = new URLSearchParams();
+    console.log(extractAcsDoi(currentUrl))
+    data.append('doi', extractAcsDoi(currentUrl));
+    data.append('format', 'bibtex');
+
+    let citationText = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: data
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not OK');
+        }
+        return response.text();
+    })
+    .catch(error => console.error('Failed to fetch citation:', error));
+
+    return citationText;
 }
 
 

@@ -23,7 +23,8 @@
             "matches": [
                 "*://journals.aps.org/*",
                 "*://www.nature.com/*",
-                "*://arxiv.org/*"
+                "*://arxiv.org/*",
+                "*://pubs.acs.org/*"
             ],
             "js": ["content.js"]
         }
